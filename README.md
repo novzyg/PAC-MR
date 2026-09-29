@@ -117,25 +117,6 @@ python src/main.py train --help
 python src/main.py evaluate --help
 ```
 
-
-Run the synthetic checks after installing dependencies:
-
-```bash
-python tests/test_model.py
-```
-
-The checks cover score descent, frozen-backbone gradients, label-input isolation, padding, empty codes, training-only graph construction, parameter bounds, and checkpoint reloading.
-
-For a small end-to-end CPU check with your prepared dataset:
-
-```bash
-DATA_DIR="$DATA_DIR" DEVICE=cpu OUTPUT_DIR="$PWD/saved/smoke" \
-  BASE_EPOCHS=1 ADJUST_EPOCHS=1 bash scripts/train.sh --smoke
-DEVICE=cpu OUTPUT_DIR="$PWD/saved/smoke" bash scripts/evaluate.sh
-```
-
-`--smoke` uses the first six patients and limits training steps. It checks execution, not recommendation performance.
-
 ---
 
 ## 🏗️ Project Structure
