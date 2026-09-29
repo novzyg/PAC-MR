@@ -10,6 +10,10 @@ PAC-MR addresses these two questions through **patient-conditioned conflict budg
 
 Medication labels provide supervision only; they are not used as inference inputs. Conflict budgets and adjustment costs are learned recommendation quantities, not clinical adverse-event probabilities or direct measures of clinical necessity.
 
+<div align="center">
+  <img src="fig/framework.png" alt="PAC-MR architecture: medication effect modeling, patient-conditioned conflict budgeting, asymmetric adjustment, and inference." width="100%" />
+</div>
+
 ## 🏆 Key Contributions
 
 - We propose **PAC-MR**, a two-stage medication recommendation framework that first estimates patient medication demands and then refines initial predictions through patient-conditioned conflict adjustment.
@@ -58,7 +62,7 @@ The manuscript uses the following preprocessed datasets:
 | MIMIC-III | 6,360 | 16,976 | 4,672 | 1,420 | 718 |
 | MIMIC-IV | 8,949 | 24,106 | 11,030 | 4,810 | 877 |
 
-These counts describe the manuscript's preprocessing version, not every distribution of MIMIC. Raw datasets and preprocessing scripts are not included. The code builds the medication co-occurrence graph from training patients only.
+These counts describe the manuscript's preprocessing version, not every distribution of MIMIC.
 
 Set the path to your prepared dataset:
 
@@ -99,7 +103,7 @@ python src/main.py prepare --data "$DATA_DIR" --output saved/data_summary
 
    Evaluation loads `full/best.pt` and the threshold selected during validation. Results are saved in `full/test_metrics.json` and `full/test_predictions.npz`.
 
-The commands above use the current script defaults, which differ from the manuscript's experiment settings. Additional training arguments apply to both stages:
+The commands above use the current script defaults. Additional training arguments apply to both stages:
 
 ```bash
 DIM=256 SEED=42 DDI_WEIGHT=1.0 bash scripts/train.sh \
@@ -113,22 +117,6 @@ python src/main.py train --help
 python src/main.py evaluate --help
 ```
 
-### Ablation Variants
-
-The model provides the following variants through `python src/main.py train --variant ...`:
-
-| Manuscript ablation | Code setting | Behavior |
-|:---|:---|:---|
-| Backbone only | `base` | Predict without conflict adjustment |
-| w/o Relation Adaptation | `allocation_only` | Fix relation coefficients to 1; learn allocation costs |
-| w/o Asymmetric Allocation | `edge_only` | Learn relation coefficients; allocate budgets equally |
-| w/o Both | `uniform` | Fix relation coefficients to 1 and use equal allocation |
-| w/o DDI Loss | `full --ddi-weight 0` | Keep full adjustment architecture without its DDI loss term |
-| Full model | `full` | Learn relation coefficients and allocation costs |
-
-All adjustment variants require `--init` pointing to a compatible base checkpoint. `scripts/train.sh` is the convenience entry for the base/full sequence; use the Python CLI directly for other variants. Architecture, dataset, and split must match the base run. Automated ablation, grid-search, and sensitivity-analysis scripts are not included in the current checkout.
-
-### Model Checks
 
 Run the synthetic checks after installing dependencies:
 
@@ -173,24 +161,10 @@ PAC-MR/
 
 Data and generated run artifacts are excluded from Git. A run stores its configuration, environment, source/data fingerprints, checkpoints, predictions, and diagnostic files under the output directory.
 
-## 📝 Evaluation and Implementation Notes
+
 
 **Evaluation.** The default ordered patient split uses the first two-thirds for training, half of the remainder for testing, and the rest for validation. Checkpoint selection maximizes validation Jaccard, with lower DDI as the tie-breaker. Predictions use threshold 0.5 by default. Accuracy metrics are averaged by patient; DDI is computed globally over predicted medication pairs. The field `prauc` uses `average_precision_score` (AP).
 
-**Training settings.** The manuscript and the current `train.sh` defaults differ:
-
-| Setting | Manuscript experimental setup (§3.1) | Current script defaults |
-|:---|:---|:---|
-| Base / adjustment epochs | 50 / 30 | 30 / 20 |
-| Base / adjustment learning rate | 0.0003 / 0.0003 | 0.0003 / 0.001 |
-| Displacement cap | 0.2 | 0.1 |
-| Random seeds | Five seeds; values not listed | One run, seed 42 |
-
-Both specify dimension 256, two graph layers, four attention heads, dropout 0.2, batch size 4, DDI loss weight 1.0, and cost ratio 4.0. The manuscript's method section states a displacement cap of 0.1, while its experimental setup states 0.2; the table above follows the experimental setup.
-
-**Architecture correspondence.** The code follows the three-module design, with details that differ from the manuscript equations. Its patient vector fuses the current visit, final GRU state, and attention-pooled visit states, rather than using the final GRU state alone. Its relation network explicitly concatenates the patient vector with the symmetric drug-pair features (4d inputs), while Equation (1) describes only the pair features (3d inputs). The cost network uses hidden dimension 32. These differences should be resolved before treating this checkout as an exact reproduction of the manuscript.
-
-**Checkpoint compatibility.** Changes to source code, data, or configuration require a new output directory. Old non-default cap/cost checkpoints without a parameter-wiring marker are rejected. Pre-reorganization runs have different source fingerprints, and older checkpoints may contain absolute server paths. Single-run test evaluation refuses to overwrite existing results.
 
 ## 📄 Paper
 
