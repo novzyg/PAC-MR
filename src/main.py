@@ -1,0 +1,62 @@
+"""Command-line entry point for PAC-MR."""
+import argparse
+
+from models import VARIANTS
+from trainer import prepare, train, evaluate
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest='command', required=True)
+    p = sub.add_parser('prepare')
+    p.add_argument('--data', required=True)
+    p.add_argument('--output', required=True)
+    p.add_argument('--split-seed', type=int, default=2026)
+    p.add_argument('--split-mode', choices=['random','ordered'], default='ordered')
+    p.set_defaults(func=prepare)
+    p = sub.add_parser('train')
+    p.add_argument('--data', required=True)
+    p.add_argument('--split', required=True)
+    p.add_argument('--output', required=True)
+    p.add_argument('--variant', choices=VARIANTS, default='full')
+    p.add_argument('--init')
+    p.add_argument('--resume', action='store_true')
+    p.add_argument('--smoke', action='store_true')
+    p.add_argument('--threshold-mode',choices=['fixed','validation'],default='fixed')
+    p.add_argument('--threshold',type=float,default=.5)
+    p.add_argument('--seed', type=int, default=42)
+    p.add_argument('--split-seed', type=int, default=2026)
+    p.add_argument('--split-mode', choices=['random','ordered'], default='ordered')
+    p.add_argument('--dim', type=int, default=256)
+    p.add_argument('--graph-layers', type=int, default=2)
+    p.add_argument('--attention-heads', type=int, default=4)
+    p.add_argument('--layers', type=int, default=1)
+    p.add_argument('--dropout', type=float, default=.2)
+    p.add_argument('--batch-size', type=int, default=8)
+    p.add_argument('--eval-batch-size', type=int, default=16)
+    p.add_argument('--epochs', type=int, default=30)
+    p.add_argument('--freeze-epochs', type=int, default=2)
+    p.add_argument('--patience', type=int, default=8)
+    p.add_argument('--lr', type=float, default=3e-4)
+    p.add_argument('--weight-decay', type=float, default=1e-5)
+    p.add_argument('--aux-weight', type=float, default=.2)
+    p.add_argument('--ddi-weight', type=float, default=.1)
+    p.add_argument('--displacement-cap', type=float, default=.1)
+    p.add_argument('--cost-ratio', type=float, default=4.)
+    p.add_argument('--target-ddi', type=float, default=.08)
+    p.add_argument('--selection', choices=['accuracy','ddi'], default='accuracy')
+    p.add_argument('--device', default='cuda:0')
+    p.add_argument('--workers', type=int, default=0)
+    p.add_argument('--threads', type=int, default=4)
+    p.set_defaults(func=train)
+    p = sub.add_parser('evaluate')
+    p.add_argument('--run', required=True)
+    p.add_argument('--device', default='cuda:0')
+    p.add_argument('--threads', type=int, default=4)
+    p.set_defaults(func=evaluate)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == '__main__':
+    main()

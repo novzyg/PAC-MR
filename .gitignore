@@ -1,0 +1,22 @@
+# OS and Python cache
+.DS_Store
+._*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+# Local environments and settings
+.venv/
+venv/
+.env
+.env.*
+.vscode/
+.idea/
+# Private datasets and generated artifacts
+/data/
+/saved/
+/outputs/
+*.pt
+*.pth
+*.pkl
+*.npz
+*.log
